@@ -66,7 +66,7 @@ const wpObj = require('webpage').create();
 const wsObj = require('webserver').create();
 
 // Global settings
-const debugMode: boolean = true;
+const debugMode: boolean = false;
 const versionNum: string = '1.0.1';
 
 // Webpage object settings
