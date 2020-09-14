@@ -67,7 +67,7 @@ const wsObj = require('webserver').create();
 
 // Global settings
 const debugMode: boolean = false;
-const versionNum: string = '1.0.1';
+const versionNum: string = '1.0.2';
 
 // Webpage object settings
 wpObj.settings.userAgent = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssCheckServer/${versionNum}`;
@@ -85,7 +85,7 @@ let listenPort = '8099'
 // Run the webservice
 console.log(`This is xssCheckServer v${versionNum}`);
 console.log(`Starting webserver on http://${listenHost}:${listenPort}`);
-const webService = wsObj.listen(`${listenHost}:${listenPort}`, function(reqObj: HttpReqObj, resObj: HttpResObj) {
+const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqObj, resObj: HttpResObj) => {
     const dateObj = new Date();
     let searchMsg = 'XSSed!';
     let xssObj: XssObj = {
@@ -96,7 +96,8 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, function(reqObj: 
         searchString: ''
     };
 
-    let foundXss = function(eventType: string, eventMsg: string) {
+    // Process the event data if event triggered
+    let eventTriggered = (eventType: string, eventMsg: string) => {
         if(debugMode) {
             console.log(`An event has been executed on ${webUrl}`);
             console.log(`==> EventType: "${eventType}" // EventData: "${eventMsg}"`);
@@ -110,17 +111,19 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, function(reqObj: 
         }
     }
 
-    wpObj.onAlert = function(eventMsg: string) { foundXss('alert()', eventMsg) };
-    wpObj.onConsoleMessage = function(eventMsg: string) { foundXss('console.log()', eventMsg) };
-    wpObj.onPrompt = function(eventMsg: string) { foundXss('prompt()', eventMsg) };
-    wpObj.onConfirm = function(eventMsg: string) { foundXss('confirm()', eventMsg) };
+    // The events handler
+    wpObj.onAlert = (eventMsg: string)          => { eventTriggered('alert()', eventMsg) };
+    wpObj.onConfirm = (eventMsg: string)        => { eventTriggered('confirm()', eventMsg) };
+    wpObj.onConsoleMessage = (eventMsg: string) => { eventTriggered('console.log()', eventMsg) };
+    wpObj.onPrompt = (eventMsg: string)         => { eventTriggered('prompt()', eventMsg) };
     if(debugMode) {
-        wpObj.onError = function(errorMsg: string) { console.error(`An error was caught: ${errorMsg}`) };
+        wpObj.onError = (errorMsg: string)      => { console.error(`An error was caught: ${errorMsg}`) };
     }
     else {
-        wpObj.onError = function() { return };
+        wpObj.onError = ()                      => { return };
     }
 
+    // We received a request
     if(debugMode) {
         console.log('Received new HTTP request');
         console.log(`Method: ${reqObj.method}`);
@@ -131,6 +134,7 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, function(reqObj: 
         console.log(' ');
     }
     
+    // We can only process POST requests on /check
     if(reqObj.url === '/check') {
         if(reqObj.method === 'POST') {
             if(reqObj.post.searchfor) {
@@ -140,12 +144,12 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, function(reqObj: 
             if(reqObj.post.url) {
                 var webUrl = reqObj.post.url;
                 xssObj.checkUrl = webUrl;
-                wpObj.open(webUrl, function(statusObj: string) {
+                wpObj.open(webUrl, (statusObj: string) => {
                     if(statusObj !== 'success') {
                         console.error(`Unable to download URL: ${webUrl}`);
                     }
                     else {
-                        wpObj.evaluate(function() {
+                        wpObj.evaluate(() => {
                             return;
                         });
                     };

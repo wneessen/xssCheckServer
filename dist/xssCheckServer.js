@@ -2,7 +2,7 @@
 var wpObj = require('webpage').create();
 var wsObj = require('webserver').create();
 var debugMode = false;
-var versionNum = '1.0.1';
+var versionNum = '1.0.2';
 wpObj.settings.userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssCheckServer/" + versionNum;
 wpObj.settings.XSSAuditingEnabled = false;
 wpObj.settings.webSecurityEnabled = false;
@@ -24,7 +24,7 @@ var webService = wsObj.listen(listenHost + ":" + listenPort, function (reqObj, r
         checkTime: dateObj,
         searchString: ''
     };
-    var foundXss = function (eventType, eventMsg) {
+    var eventTriggered = function (eventType, eventMsg) {
         if (debugMode) {
             console.log("An event has been executed on " + webUrl);
             console.log("==> EventType: \"" + eventType + "\" // EventData: \"" + eventMsg + "\"");
@@ -37,10 +37,10 @@ var webService = wsObj.listen(listenHost + ":" + listenPort, function (reqObj, r
             xssObj.xssData.push({ eventType: eventType, eventMsg: eventMsg });
         }
     };
-    wpObj.onAlert = function (eventMsg) { foundXss('alert()', eventMsg); };
-    wpObj.onConsoleMessage = function (eventMsg) { foundXss('console.log()', eventMsg); };
-    wpObj.onPrompt = function (eventMsg) { foundXss('prompt()', eventMsg); };
-    wpObj.onConfirm = function (eventMsg) { foundXss('confirm()', eventMsg); };
+    wpObj.onAlert = function (eventMsg) { eventTriggered('alert()', eventMsg); };
+    wpObj.onConfirm = function (eventMsg) { eventTriggered('confirm()', eventMsg); };
+    wpObj.onConsoleMessage = function (eventMsg) { eventTriggered('console.log()', eventMsg); };
+    wpObj.onPrompt = function (eventMsg) { eventTriggered('prompt()', eventMsg); };
     if (debugMode) {
         wpObj.onError = function (errorMsg) { console.error("An error was caught: " + errorMsg); };
     }
