@@ -42,10 +42,10 @@ var webService = wsObj.listen(listenHost + ":" + listenPort, function (reqObj, r
     wpObj.onPrompt = function (eventMsg) { foundXss('prompt()', eventMsg); };
     wpObj.onConfirm = function (eventMsg) { foundXss('confirm()', eventMsg); };
     if (debugMode) {
-        wpObj.onError = function () { return; };
+        wpObj.onError = function (errorMsg) { console.error("An error was caught: " + errorMsg); };
     }
     else {
-        wpObj.onError = function (errorMsg) { console.error("An error was caught: " + errorMsg); };
+        wpObj.onError = function () { return; };
     }
     if (debugMode) {
         console.log('Received new HTTP request');

@@ -115,10 +115,10 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, function(reqObj: 
     wpObj.onPrompt = function(eventMsg: string) { foundXss('prompt()', eventMsg) };
     wpObj.onConfirm = function(eventMsg: string) { foundXss('confirm()', eventMsg) };
     if(debugMode) {
-        wpObj.onError = function() { return };
+        wpObj.onError = function(errorMsg: string) { console.error(`An error was caught: ${errorMsg}`) };
     }
     else {
-        wpObj.onError = function(errorMsg: string) { console.error(`An error was caught: ${errorMsg}`) };
+        wpObj.onError = function() { return };
     }
 
     if(debugMode) {
