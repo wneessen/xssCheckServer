@@ -1,0 +1,19 @@
+{
+    "compileOnSave": true,
+    "compilerOptions": {
+      "allowJs": false,
+      "alwaysStrict": true,
+      "diagnostics": true,
+      "forceConsistentCasingInFileNames": true,
+      "pretty": false,
+      "declaration": true,
+      "declarationMap": true,
+      "noImplicitAny": true,
+      "removeComments": true,
+      "outDir": "../dist",
+      "noErrorTruncation": true,
+      "noImplicitThis": true,
+      "watch": true,
+      "sourceMap": false,
+    }
+}
