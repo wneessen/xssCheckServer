@@ -2,8 +2,8 @@
 var wpObj = require('webpage').create();
 var wsObj = require('webserver').create();
 var debugMode = true;
-var versionNum = '1.0';
-wpObj.settings.userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 Winnis PhantomJS-XSSchecker/" + versionNum;
+var versionNum = '1.0.1';
+wpObj.settings.userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssCheckServer/" + versionNum;
 wpObj.settings.XSSAuditingEnabled = false;
 wpObj.settings.webSecurityEnabled = false;
 wpObj.settings.loadImages = true;
