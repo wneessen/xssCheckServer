@@ -5,6 +5,7 @@ interface XssObj {
     searchString: string;
     xssData: Array<XssDataObj>;
     errorMsg?: string;
+    alertOnAnyEvent: boolean;
 }
 interface XssDataObj {
     eventType: string;
@@ -12,6 +13,7 @@ interface XssDataObj {
 }
 interface HttpPostParms {
     searchfor: string;
+    everyevent: string;
     url: string;
 }
 interface HttpReqObj {

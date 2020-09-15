@@ -15,13 +15,22 @@ $ phantomjs dist/xssCheckServer.min.js
 
 Once started, the server will (by default) listen on http://localhost:8099 and will look for POST requests on the /check route.
 
+The server will now fetch and evaluate the website. On any alert(), console.log(), prompt() or confirm() event, the server will compare the received message against the ```searchfor``` parameter.
+
+### Supported POST parameters
+The following POST request parameters are supported:
+
+- ```url```: The URL to be checked by the webservice (When using special characters, make sure to URLencode them first)
+- ```searchfor```: The string that the service compares, when an event fires (Default: 'XSSed!')
+- ```everyevent```: When this parameters is set to "true", the service will report any event that triggered without comparing the searchstring
+
+### Example request (via cURL)
 To have a website checked, you can issue the URL and the searchfor-parameter via your favourite web client:
 ```sh
 $ curl -qsS --data-urlencode url='https://www.yourwebsite.com/some/script.php?param1=12345&cfg=/ihackyou\%22};alert(99191999191999);/*' -d searchfor='99191999191999' http://localhost:8099/check
 ```
 
-The server will now fetch and evaluate the website. On any alert(), console.log(), prompt() or confirm() event, the server will compare the received message against the ```searchfor``` parameter.
-
+### Example responses
 The server will respond with a JSON object. On a successfull identification of a potential XSS, the response can look like this:
 ```json
 {
@@ -42,7 +51,8 @@ The server will respond with a JSON object. On a successfull identification of a
   ],
   "checkUrl": "https://www.yourwebsite.com/some/script.php?param1=12345&cfg=/ihackyou\\%22};alert(99191999191999);/*",
   "checkTime": "2020-09-14T21:35:16.361Z",
-  "searchString": "99191999191999"
+  "searchString": "99191999191999",
+  "alertOnAnyEvent": false
 }
 ```
 
@@ -53,11 +63,20 @@ In case the page seems clean, the response can look like this:
   "xssData": [],
   "checkUrl": "https://www.yourwebsite.com/some/script.php?param1=12345&cfg=/ihackyou\\%22};alert(99191999191999);/*",
   "checkTime": "2020-09-14T21:49:20.018Z",
-  "searchString": "99191999191999"
+  "searchString": "99191999191999",
+  "alertOnAnyEvent": false
 }
 ```
 
-## Parameters
+### Response JSON parameters
+- ```hasXss (boolean)```: Returns ```true``` if a possible XSS was found
+- ```xssData (Array<EventData>)```: Returns an array for any event that fired. Each ```EventData``` entry consists of a ```eventType (string)``` and the ```eventMsg (string)```
+- ```checkTime (Date)```: Returns the timestamp of when the check was executed
+- ```searchString (string)```: Returns the provided searchfor-string for reference
+- ```checkUrl (string)```: Returns the provided URL for reference
+- ```alertOnAnyEvent (boolean)```: Returns ```true``` when the ```everyevent``` POST parameter was set in the request
+
+## CLI Options
 The server provides the following CLI parameters to override defaults
 
 - ```-l <IP address or hostname>```: The IP/hostname for the server to listen on (Default: 127.0.0.1)

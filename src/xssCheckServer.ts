@@ -12,7 +12,8 @@ interface XssObj {
     hasXss: boolean,
     searchString: string,
     xssData: Array<XssDataObj>,
-    errorMsg?: string
+    errorMsg?: string,
+    alertOnAnyEvent: boolean
 }
 
 /**
@@ -32,6 +33,7 @@ interface XssDataObj {
 */
 interface HttpPostParms {
     searchfor: string,
+    everyevent: string,
     url: string
 }
 
@@ -68,7 +70,7 @@ const wsObj = require('webserver').create();
 const sysObj = require("system");
 
 // Global settings
-const versionNum: string = '1.0.4';
+const versionNum: string = '1.0.5';
 let debugMode: boolean = false;
 
 // Webpage object settings
@@ -117,7 +119,8 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
         xssData: [],
         checkUrl: '',
         checkTime: dateObj,
-        searchString: ''
+        searchString: '',
+        alertOnAnyEvent: false
     };
 
     // Process the event data if event triggered
@@ -126,7 +129,7 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
             console.log(`An event has been executed on ${webUrl}`);
             console.log(`==> EventType: "${eventType}" // EventData: "${eventMsg}"`);
         }
-        if(eventMsg === searchMsg) {
+        if(eventMsg === searchMsg || xssObj.alertOnAnyEvent === true) {
             if(debugMode) {
                 console.log('Possible XSS! The eventMsg matches the search string: "' + searchMsg + '"\n');
             }
@@ -161,9 +164,13 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
     // We can only process POST requests on /check
     if(reqObj.url === '/check') {
         if(reqObj.method === 'POST') {
+            console.log(reqObj.post.searchfor);
             if(reqObj.post.searchfor) {
                 searchMsg = reqObj.post.searchfor;
                 xssObj.searchString = searchMsg;
+            }
+            if(reqObj.post.everyevent && reqObj.post.everyevent === 'true') {
+                xssObj.alertOnAnyEvent = true;
             }
             if(reqObj.post.url) {
                 var webUrl = reqObj.post.url;
