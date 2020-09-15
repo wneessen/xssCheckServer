@@ -18,7 +18,7 @@ ENV=/usr/bin/env
 STARTPARMS=""
 SERVERDIR=/usr/local/xssCheckServer
 PHANTOMJS=/usr/local/bin/phantomjs
-DIRNAME=$(${ENV} which dirname 2>/dev/null || exit 1) || (cmdNotFound dirname && return 1)
+DIRNAME=$(${ENV} which dirname 2>/dev/null || exit 1) || (cmdNotFound dirname && exit 1) || exit 1
 
 getBaseDir | read BASEDIR
 if [ -e ${BASEDIR}/bin/prodServer.local.conf ]; then
@@ -26,7 +26,7 @@ if [ -e ${BASEDIR}/bin/prodServer.local.conf ]; then
 fi
 
 if [ ! -e ${PHANTOMJS} ]; then
-    PHANTOMJS=$(${ENV} which phantomjs 2>/dev/null || exit 1) || (cmdNotFound phantomjs && return 1)
+    PHANTOMJS=$(${ENV} which phantomjs 2>/dev/null || exit 1) || (cmdNotFound phantomjs && exit 1) || exit 1
 fi
 
 if [ "x${LISTENPORT}" != "x" ]; then
