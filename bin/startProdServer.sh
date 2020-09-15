@@ -21,9 +21,11 @@ PHANTOMJS=/usr/local/bin/phantomjs
 DIRNAME=$(${ENV} which dirname || exit 1) || (cmdNotFound dirname && return 1)
 
 getBaseDir | read BASEDIR
-. ${BASEDIR}/bin/prodServer.local.conf
+if [ -e ${BASEDIR}/bin/prodServer.local.conf ]; then
+    . ${BASEDIR}/bin/prodServer.local.conf
+fi
 
-if [ -e ${PHANTOMJS} ]; then
+if [ ! -e ${PHANTOMJS} ]; then
     PHANTOMJS=$(${ENV} which phantomjs || exit 1) || (cmdNotFound phantomjs && return 1)
 fi
 
