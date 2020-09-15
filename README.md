@@ -1,5 +1,5 @@
 # xssCheckServer
-A simple phantomJS-based webservice, that downloads and evaluates a given URL and searches for typical XSS-events like alert(), prompt(), console.log() or confirm(). If such event occurs on the given website, the message that is triggered by the event will be compared to a provided search string and marked as "possible XSS", in case it matches.
+A simple phantomJS-based webservice, that downloads and evaluates a given URL and searches for typical XSS-events like ```alert()```, ```prompt()```, ```console.log()``` or ```confirm()```. If such event occurs on the given website, the message that is triggered by the event will be compared to a provided search string and marked as "possible XSS", in case it matches.
 
 
 ## Features
