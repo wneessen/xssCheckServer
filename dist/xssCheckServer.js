@@ -2,12 +2,12 @@
 var wpObj = require('webpage').create();
 var wsObj = require('webserver').create();
 var sysObj = require("system");
-var versionNum = '1.0.6';
+var versionNum = '1.0.8';
 var debugMode = false;
 wpObj.settings.userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssCheckServer/" + versionNum;
 wpObj.settings.XSSAuditingEnabled = false;
 wpObj.settings.webSecurityEnabled = false;
-wpObj.settings.loadImages = true;
+wpObj.settings.loadImages = false;
 wpObj.settings.javascriptEnabled = true;
 wpObj.settings.localToRemoteUrlAccessEnabled = true;
 wpObj.settings.resourceTimeout = 5000;
@@ -44,14 +44,17 @@ var webService = wsObj.listen(listenHost + ":" + listenPort, function (reqObj, r
     var benchMark = Date.now();
     var searchMsg = 'XSSed!';
     var xssObj = {
-        hasXss: false,
-        xssData: [],
         blockedUrls: [],
-        checkUrl: '',
         checkTime: dateObj,
+        checkUrl: '',
+        hasXss: false,
         searchString: '',
+        statusCode: 0,
+        statusMsg: '',
+        xssData: [],
         alertOnAnyEvent: false,
-        requestTime: 0
+        requestTime: 0,
+        resourceErrors: []
     };
     var eventTriggered = function (eventType, eventMsg) {
         if (debugMode) {
@@ -89,6 +92,18 @@ var webService = wsObj.listen(listenHost + ":" + listenPort, function (reqObj, r
             networkRequest.abort();
         }
     };
+    wpObj.onResourceError = function (resourceError) {
+        if (debugMode) {
+            console.error("Unable to load resource (#" + resourceError.id.toString() + " => URL:" + resourceError.url + ")");
+            console.error("Error code: " + resourceError.errorCode + ". Description: " + resourceError.errorString);
+        }
+        ;
+        xssObj.resourceErrors.push({
+            url: resourceError.url,
+            errorCode: resourceError.errorCode,
+            errorString: resourceError.errorString
+        });
+    };
     if (debugMode) {
         console.log('Received new HTTP request');
         console.log("Method: " + reqObj.method);
@@ -113,9 +128,16 @@ var webService = wsObj.listen(listenHost + ":" + listenPort, function (reqObj, r
                 wpObj.open(webUrl, function (statusObj) {
                     benchMark = Date.now() - benchMark;
                     if (statusObj !== 'success') {
-                        console.error("Unable to download URL: " + webUrl);
+                        if (debugMode) {
+                            console.error("Unable to download URL: " + webUrl);
+                        }
+                        xssObj.statusCode = 500;
+                        xssObj.statusMsg = statusObj;
+                        xssObj.errorMsg = 'Unabled to download provided URL';
                     }
                     else {
+                        xssObj.statusCode = 200;
+                        xssObj.statusMsg = statusObj;
                         wpObj.evaluate(function () {
                             return;
                         });
@@ -132,6 +154,7 @@ var webService = wsObj.listen(listenHost + ":" + listenPort, function (reqObj, r
             }
             else {
                 resObj.statusCode = 400;
+                xssObj.statusCode = 400;
                 xssObj.errorMsg = 'Missing data';
                 resObj.write(JSON.stringify(xssObj));
                 resObj.close();
@@ -139,6 +162,7 @@ var webService = wsObj.listen(listenHost + ":" + listenPort, function (reqObj, r
         }
         else {
             resObj.statusCode = 404;
+            xssObj.statusCode = 404;
             xssObj.errorMsg = 'Invalid request method';
             resObj.write(JSON.stringify(xssObj));
             resObj.close();
@@ -146,6 +170,7 @@ var webService = wsObj.listen(listenHost + ":" + listenPort, function (reqObj, r
     }
     else {
         resObj.statusCode = 404;
+        xssObj.statusCode = 404;
         xssObj.errorMsg = 'Route not found';
         resObj.write(JSON.stringify(xssObj));
         resObj.close();

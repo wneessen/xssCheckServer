@@ -3,10 +3,13 @@ interface XssObj {
     checkUrl: string;
     hasXss: boolean;
     searchString: string;
+    statusCode: number;
+    statusMsg: string;
     xssData: Array<XssDataObj>;
+    resourceErrors?: Array<ReturnResourceError>;
+    alertOnAnyEvent?: boolean;
     blockedUrls?: Array<string>;
     errorMsg?: string;
-    alertOnAnyEvent: boolean;
     requestTime?: number;
 }
 interface XssDataObj {
@@ -29,6 +32,19 @@ interface HttpResObj {
 declare class HttpResObj {
     write(httpRespone: string): void;
     close(): void;
+}
+interface ResourceError {
+    url: string;
+    errorCode: string;
+    errorString: string;
+    id: number;
+    status?: string;
+    statusText?: string;
+}
+interface ReturnResourceError {
+    url: string;
+    errorCode: string;
+    errorString: string;
 }
 declare class PhantomNetworkRequest {
     abort(): void;

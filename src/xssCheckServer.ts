@@ -11,10 +11,13 @@ interface XssObj {
     checkUrl: string,
     hasXss: boolean,
     searchString: string,
+    statusCode: number,
+    statusMsg: string,
     xssData: Array<XssDataObj>,
+    resourceErrors?: Array<ReturnResourceError>,
+    alertOnAnyEvent?: boolean,
     blockedUrls?: Array<string>,
     errorMsg?: string,
-    alertOnAnyEvent: boolean,
     requestTime?: number
 }
 
@@ -62,6 +65,24 @@ declare class HttpResObj {
     write(httpRespone: string): void;
     close(): void;
 }
+/**
+ * Resource error Object
+ *
+ * @interface ResourceError
+*/
+interface ResourceError {
+    url: string,
+    errorCode: string,
+    errorString: string,
+    id: number,
+    status?: string,
+    statusText?: string
+}
+interface ReturnResourceError {
+    url: string,
+    errorCode: string,
+    errorString: string
+}
 
 /**
  * phantomJS NetworkRequest Class
@@ -81,14 +102,14 @@ const wsObj = require('webserver').create();
 const sysObj = require("system");
 
 // Global settings
-const versionNum: string = '1.0.6';
+const versionNum: string = '1.0.8';
 let debugMode: boolean = false;
 
 // Webpage object settings
 wpObj.settings.userAgent = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssCheckServer/${versionNum}`;
 wpObj.settings.XSSAuditingEnabled = false;
 wpObj.settings.webSecurityEnabled = false;
-wpObj.settings.loadImages = true;
+wpObj.settings.loadImages = false;
 wpObj.settings.javascriptEnabled = true;
 wpObj.settings.localToRemoteUrlAccessEnabled = true;
 wpObj.settings.resourceTimeout = 5000;
@@ -133,14 +154,17 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
     let benchMark = Date.now();
     let searchMsg = 'XSSed!';
     let xssObj: XssObj = {
-        hasXss: false,
-        xssData: [],
         blockedUrls: [],
-        checkUrl: '',
         checkTime: dateObj,
+        checkUrl: '',
+        hasXss: false,
         searchString: '',
+        statusCode: 0,
+        statusMsg: '',
+        xssData: [],
         alertOnAnyEvent: false,
-        requestTime: 0
+        requestTime: 0,
+        resourceErrors: []
     };
 
     // Process the event data if event triggered
@@ -185,6 +209,19 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
         }
     };
 
+    // Resource errors
+    wpObj.onResourceError = function(resourceError: ResourceError) {
+        if(debugMode) {
+            console.error(`Unable to load resource (#${resourceError.id.toString()} => URL:${resourceError.url})`);
+            console.error(`Error code: ${resourceError.errorCode}. Description: ${resourceError.errorString}`);
+        };
+        xssObj.resourceErrors.push({
+            url: resourceError.url,
+            errorCode: resourceError.errorCode,
+            errorString: resourceError.errorString,
+        });
+    };
+
     // We received a request
     if(debugMode) {
         console.log('Received new HTTP request');
@@ -212,9 +249,16 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
                 wpObj.open(webUrl, (statusObj: string) => {
                     benchMark = Date.now() - benchMark;
                     if(statusObj !== 'success') {
-                        console.error(`Unable to download URL: ${webUrl}`);
+                        if(debugMode) {
+                            console.error(`Unable to download URL: ${webUrl}`);
+                        }
+                        xssObj.statusCode = 500;
+                        xssObj.statusMsg = statusObj;
+                        xssObj.errorMsg = 'Unabled to download provided URL';
                     }
                     else {
+                        xssObj.statusCode = 200;
+                        xssObj.statusMsg = statusObj;
                         wpObj.evaluate(() => {
                             return;
                         });
@@ -230,6 +274,7 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
             }
             else {
                 resObj.statusCode = 400;
+                xssObj.statusCode = 400;
                 xssObj.errorMsg = 'Missing data';
                 resObj.write(JSON.stringify(xssObj));
                 resObj.close();
@@ -237,6 +282,7 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
         }
         else {
             resObj.statusCode = 404;
+            xssObj.statusCode = 404;
             xssObj.errorMsg = 'Invalid request method';
             resObj.write(JSON.stringify(xssObj));
             resObj.close();
@@ -244,6 +290,7 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
     }
     else {
         resObj.statusCode = 404;
+        xssObj.statusCode = 404;
         xssObj.errorMsg = 'Route not found';
         resObj.write(JSON.stringify(xssObj));
         resObj.close();
