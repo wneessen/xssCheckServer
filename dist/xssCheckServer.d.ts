@@ -4,6 +4,7 @@ interface XssObj {
     hasXss: boolean;
     searchString: string;
     xssData: Array<XssDataObj>;
+    errorMsg?: string;
 }
 interface XssDataObj {
     eventType: string;

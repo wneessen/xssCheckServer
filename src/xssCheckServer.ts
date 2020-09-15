@@ -11,7 +11,8 @@ interface XssObj {
     checkUrl: string,
     hasXss: boolean,
     searchString: string,
-    xssData: Array<XssDataObj>
+    xssData: Array<XssDataObj>,
+    errorMsg?: string
 }
 
 /**
@@ -67,7 +68,7 @@ const wsObj = require('webserver').create();
 const sysObj = require("system");
 
 // Global settings
-const versionNum: string = '1.0.3';
+const versionNum: string = '1.0.4';
 let debugMode: boolean = false;
 
 // Webpage object settings
@@ -183,19 +184,22 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
             }
             else {
                 resObj.statusCode = 400;
-                resObj.write('Missing data');
+                xssObj.errorMsg = 'Missing data';
+                resObj.write(JSON.stringify(xssObj));
                 resObj.close();
             }
         }
         else {
             resObj.statusCode = 404;
-            resObj.write('File not allowed');
+            xssObj.errorMsg = 'Invalid request method';
+            resObj.write(JSON.stringify(xssObj));
             resObj.close();
         }
     }
     else {
         resObj.statusCode = 404;
-        resObj.write('File not found');
+        xssObj.errorMsg = 'Route not found';
+        resObj.write(JSON.stringify(xssObj));
         resObj.close();
     }
 });

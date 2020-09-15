@@ -2,7 +2,7 @@
 var wpObj = require('webpage').create();
 var wsObj = require('webserver').create();
 var sysObj = require("system");
-var versionNum = '1.0.3';
+var versionNum = '1.0.4';
 var debugMode = false;
 wpObj.settings.userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssCheckServer/" + versionNum;
 wpObj.settings.XSSAuditingEnabled = false;
@@ -103,19 +103,22 @@ var webService = wsObj.listen(listenHost + ":" + listenPort, function (reqObj, r
             }
             else {
                 resObj.statusCode = 400;
-                resObj.write('Missing data');
+                xssObj.errorMsg = 'Missing data';
+                resObj.write(JSON.stringify(xssObj));
                 resObj.close();
             }
         }
         else {
             resObj.statusCode = 404;
-            resObj.write('File not allowed');
+            xssObj.errorMsg = 'Invalid request method';
+            resObj.write(JSON.stringify(xssObj));
             resObj.close();
         }
     }
     else {
         resObj.statusCode = 404;
-        resObj.write('File not found');
+        xssObj.errorMsg = 'Route not found';
+        resObj.write(JSON.stringify(xssObj));
         resObj.close();
     }
 });
