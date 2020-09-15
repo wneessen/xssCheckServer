@@ -19,6 +19,7 @@ STARTPARMS=""
 SERVERDIR=/usr/local/xssCheckServer
 PHANTOMJS=/usr/local/bin/phantomjs
 DIRNAME=$(${ENV} which dirname 2>/dev/null || exit 1) || (cmdNotFound dirname && exit 1) || exit 1
+PKILL=$(${ENV} which pkill 2>/dev/null || exit 1) || (cmdNotFound pkill && exit 1) || exit 1
 
 getBaseDir | read BASEDIR
 if [ -e ${BASEDIR}/bin/prodServer.local.conf ]; then
@@ -37,4 +38,14 @@ if [ "x${LISTENHOST}" != "x" ]; then
     STARTPARMS="${STARTPARMS} -l ${LISTENHOST}"
 fi
 
-${PHANTOMJS} ${BASEDIR}/dist/xssCheckServer.min.js ${STARTPARMS}
+case "${1}" in
+    start)
+        ${PHANTOMJS} ${BASEDIR}/dist/xssCheckServer.min.js ${STARTPARMS}
+    ;;
+    stop)
+        ${PKILL} phantomjs
+    ;;
+    *)
+        echo "Usage: $0 [start|stop]"
+    ;;
+esac
