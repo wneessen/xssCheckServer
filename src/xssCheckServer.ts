@@ -102,9 +102,9 @@ const wsObj = require('webserver').create();
 const sysObj = require("system");
 
 // Global settings
-const versionNum: string = '1.0.9';
+const versionNum: string = '1.0.10';
 let debugMode: boolean = false;
-let returnResErrors: boolean = false;
+let returnResErrors: boolean = true;
 
 // Webpage object settings
 wpObj.settings.userAgent = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssCheckServer/${versionNum}`;
@@ -121,6 +121,9 @@ const resBlackList: Array<string> = [
     'device-metrics-us.amazon.com', 'crashlytics.com', 'doubleclick.net'
 ];
 
+// Resource Error ignore list
+const resErrorIgnoreList: Array<number> = [5, 301];
+
 // Web server settings
 let listenHost = '127.0.0.1';
 let listenPort = '8099';
@@ -132,7 +135,7 @@ cliArgs.forEach(function(cliArg: string, cliIdx: string) {
         let curArg = cliArgs[cliIdx];
         let curParam = cliArgs[(cliIdx + 1)];
         if(curArg === '-h') {
-            console.log(`Usage: ${sysObj.args[0]} [-l 127.0.0.1 -p 8099]`);
+            console.log(`Usage: ${sysObj.args[0]} [-l 127.0.0.1, -p 8099, -d, -h]`);
             phantom.exit(0);
         }
         if(curArg === '-l') {
@@ -216,7 +219,7 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
             console.error(`Unable to load resource (#${resourceError.id.toString()} => URL:${resourceError.url})`);
             console.error(`Error code: ${resourceError.errorCode}. Description: ${resourceError.errorString}`);
         };
-        if(returnResErrors) {
+        if(returnResErrors && resErrorIgnoreList.indexOf(parseInt(resourceError.errorCode)) === -1) {
             xssObj.resourceErrors.push({
                 url: resourceError.url,
                 errorCode: resourceError.errorCode,

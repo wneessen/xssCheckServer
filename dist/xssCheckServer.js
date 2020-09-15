@@ -2,9 +2,9 @@
 var wpObj = require('webpage').create();
 var wsObj = require('webserver').create();
 var sysObj = require("system");
-var versionNum = '1.0.9';
+var versionNum = '1.0.10';
 var debugMode = false;
-var returnResErrors = false;
+var returnResErrors = true;
 wpObj.settings.userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssCheckServer/" + versionNum;
 wpObj.settings.XSSAuditingEnabled = false;
 wpObj.settings.webSecurityEnabled = false;
@@ -16,6 +16,7 @@ var resBlackList = [
     'googletagmanager.com', 'google-analytics.com', 'optimizely.com', '.amazon-adsystem.com',
     'device-metrics-us.amazon.com', 'crashlytics.com', 'doubleclick.net'
 ];
+var resErrorIgnoreList = [5, 301];
 var listenHost = '127.0.0.1';
 var listenPort = '8099';
 var cliArgs = sysObj.args;
@@ -24,7 +25,7 @@ cliArgs.forEach(function (cliArg, cliIdx) {
         var curArg = cliArgs[cliIdx];
         var curParam = cliArgs[(cliIdx + 1)];
         if (curArg === '-h') {
-            console.log("Usage: " + sysObj.args[0] + " [-l 127.0.0.1 -p 8099]");
+            console.log("Usage: " + sysObj.args[0] + " [-l 127.0.0.1, -p 8099, -d, -h]");
             phantom.exit(0);
         }
         if (curArg === '-l') {
@@ -99,7 +100,7 @@ var webService = wsObj.listen(listenHost + ":" + listenPort, function (reqObj, r
             console.error("Error code: " + resourceError.errorCode + ". Description: " + resourceError.errorString);
         }
         ;
-        if (returnResErrors) {
+        if (returnResErrors && resErrorIgnoreList.indexOf(parseInt(resourceError.errorCode)) === -1) {
             xssObj.resourceErrors.push({
                 url: resourceError.url,
                 errorCode: resourceError.errorCode,
