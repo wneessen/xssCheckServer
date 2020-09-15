@@ -57,5 +57,37 @@ In case the page seems clean, the response can look like this:
 }
 ```
 
+## Parameters
+The server provides the following CLI parameters to override defaults
+
+- ```-l <IP address or hostname>```: The IP/hostname for the server to listen on (Default: 127.0.0.1)
+- ```-p <Port>```: The port for the server to listen on (Default: 8099)
+- ```-d```: Enable DEBUG mode (more logging)
+- ```-h```: Show usage
+
+## Startup script
+The service comes with a startup script in the ```./bin```-directory called ```startProdServer.sh```
+The script looks for a local config file ```./bin/prodServer.local.conf``` which can be used to override the default parameters of the script.
+
+The following parameters can be overwritten:
+```sh
+PHANTOMJS=<Path to your phantomJS binary>
+LISTENHOST=<IP/hostname to listen on>
+LISTENPORT=<Port to listen on>
+```
+
+To start the service you run: ```./bin/startProdServer.sh start```
+
+To stop the service you run: ```./bin/startProdServer.sh stop```
+
+## Systemd
+In the ```./systemd```-directory you find an example service-file to use for your systemd to use. Please adjust the path accordingly.A
+
+Copy the file to your systemd-services-directory and run ```sudo systemctl daemon-reload``` to update your systemd-services
+
+To enable the service run: ```systemctl enable xss-check-server```
+To start the service run: ```systemctl start xss-check-server```
+
+
 ## License
 [MIT](./LICENSE)
