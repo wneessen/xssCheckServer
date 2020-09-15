@@ -15,5 +15,9 @@
       "noImplicitThis": true,
       "watch": true,
       "sourceMap": false,
+      "typeRoots": [
+        ".",
+        "../node_modules"
+      ]
     }
 }

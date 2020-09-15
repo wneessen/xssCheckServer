@@ -64,10 +64,11 @@ declare class HttpResObj {
 // Initiate plugins
 const wpObj = require('webpage').create();
 const wsObj = require('webserver').create();
+const sysObj = require("system");
 
 // Global settings
-const debugMode: boolean = false;
-const versionNum: string = '1.0.2';
+const versionNum: string = '1.0.3';
+let debugMode: boolean = false;
 
 // Webpage object settings
 wpObj.settings.userAgent = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssCheckServer/${versionNum}`;
@@ -80,7 +81,29 @@ wpObj.settings.resourceTimeout = 5000;
 
 // Web server settings
 let listenHost = '127.0.0.1';
-let listenPort = '8099'
+let listenPort = '8099';
+
+// Read system parameters
+let cliArgs = sysObj.args;
+cliArgs.forEach(function(cliArg: string, cliIdx: string) {
+    if(cliArg.match(/^-/) && cliArg !== '-') {
+        let curArg = cliArgs[cliIdx];
+        let curParam = cliArgs[(cliIdx + 1)];
+        if(curArg === '-h') {
+            console.log(`Usage: ${sysObj.args[0]} [-l 127.0.0.1 -p 8099]`);
+            phantom.exit(0);
+        }
+        if(curArg === '-l') {
+            listenHost = curParam;
+        }
+        if(curArg === '-p') {
+            listenPort = curParam;
+        }
+        if(curArg === '-d') {
+            debugMode = true;
+        }
+    }
+});
 
 // Run the webservice
 console.log(`This is xssCheckServer v${versionNum}`);

@@ -1,8 +1,9 @@
 "use strict";
 var wpObj = require('webpage').create();
 var wsObj = require('webserver').create();
+var sysObj = require("system");
+var versionNum = '1.0.3';
 var debugMode = false;
-var versionNum = '1.0.2';
 wpObj.settings.userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssCheckServer/" + versionNum;
 wpObj.settings.XSSAuditingEnabled = false;
 wpObj.settings.webSecurityEnabled = false;
@@ -12,6 +13,26 @@ wpObj.settings.localToRemoteUrlAccessEnabled = true;
 wpObj.settings.resourceTimeout = 5000;
 var listenHost = '127.0.0.1';
 var listenPort = '8099';
+var cliArgs = sysObj.args;
+cliArgs.forEach(function (cliArg, cliIdx) {
+    if (cliArg.match(/^-/) && cliArg !== '-') {
+        var curArg = cliArgs[cliIdx];
+        var curParam = cliArgs[(cliIdx + 1)];
+        if (curArg === '-h') {
+            console.log("Usage: " + sysObj.args[0] + " [-l 127.0.0.1 -p 8099]");
+            phantom.exit(0);
+        }
+        if (curArg === '-l') {
+            listenHost = curParam;
+        }
+        if (curArg === '-p') {
+            listenPort = curParam;
+        }
+        if (curArg === '-d') {
+            debugMode = true;
+        }
+    }
+});
 console.log("This is xssCheckServer v" + versionNum);
 console.log("Starting webserver on http://" + listenHost + ":" + listenPort);
 var webService = wsObj.listen(listenHost + ":" + listenPort, function (reqObj, resObj) {

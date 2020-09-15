@@ -27,9 +27,11 @@ declare class HttpResObj {
 }
 declare const wpObj: any;
 declare const wsObj: any;
-declare const debugMode: boolean;
+declare const sysObj: any;
 declare const versionNum: string;
+declare let debugMode: boolean;
 declare let listenHost: string;
 declare let listenPort: string;
+declare let cliArgs: any;
 declare const webService: any;
 //# sourceMappingURL=xssCheckServer.d.ts.map
