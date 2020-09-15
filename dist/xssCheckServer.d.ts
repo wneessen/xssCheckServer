@@ -56,6 +56,7 @@ declare const wsObj: any;
 declare const sysObj: any;
 declare const versionNum: string;
 declare let debugMode: boolean;
+declare let returnResErrors: boolean;
 declare const resBlackList: Array<string>;
 declare let listenHost: string;
 declare let listenPort: string;

@@ -102,8 +102,9 @@ const wsObj = require('webserver').create();
 const sysObj = require("system");
 
 // Global settings
-const versionNum: string = '1.0.8';
+const versionNum: string = '1.0.9';
 let debugMode: boolean = false;
+let returnResErrors: boolean = false;
 
 // Webpage object settings
 wpObj.settings.userAgent = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssCheckServer/${versionNum}`;
@@ -112,7 +113,7 @@ wpObj.settings.webSecurityEnabled = false;
 wpObj.settings.loadImages = false;
 wpObj.settings.javascriptEnabled = true;
 wpObj.settings.localToRemoteUrlAccessEnabled = true;
-wpObj.settings.resourceTimeout = 5000;
+wpObj.settings.resourceTimeout = 3000;
 
 // Resource blacklist
 const resBlackList: Array<string> = [
@@ -215,11 +216,13 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
             console.error(`Unable to load resource (#${resourceError.id.toString()} => URL:${resourceError.url})`);
             console.error(`Error code: ${resourceError.errorCode}. Description: ${resourceError.errorString}`);
         };
-        xssObj.resourceErrors.push({
-            url: resourceError.url,
-            errorCode: resourceError.errorCode,
-            errorString: resourceError.errorString,
-        });
+        if(returnResErrors) {
+            xssObj.resourceErrors.push({
+                url: resourceError.url,
+                errorCode: resourceError.errorCode,
+                errorString: resourceError.errorString,
+            });
+        }
     };
 
     // We received a request
