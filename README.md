@@ -49,10 +49,16 @@ The server will respond with a JSON object. On a successfull identification of a
       "eventMsg": "99191999191999"
     },
   ],
+  "blockedUrls": [
+    "https://cdn.optimizely.com/js/123456789.js",
+    "https://www.googletagmanager.com/gtm.js?id=GTM-123456",
+    "https://www.google-analytics.com/analytics.js"
+  ],
   "checkUrl": "https://www.yourwebsite.com/some/script.php?param1=12345&cfg=/ihackyou\\%22};alert(99191999191999);/*",
   "checkTime": "2020-09-14T21:35:16.361Z",
   "searchString": "99191999191999",
-  "alertOnAnyEvent": false
+  "alertOnAnyEvent": false,
+  "requestTime": 1980
 }
 ```
 
@@ -63,18 +69,26 @@ In case the page seems clean, the response can look like this:
   "xssData": [],
   "checkUrl": "https://www.yourwebsite.com/some/script.php?param1=12345&cfg=/ihackyou\\%22};alert(99191999191999);/*",
   "checkTime": "2020-09-14T21:49:20.018Z",
+  "blockedUrls": [
+    "https://cdn.optimizely.com/js/123456789.js",
+    "https://www.googletagmanager.com/gtm.js?id=GTM-123456",
+    "https://www.google-analytics.com/analytics.js"
+  ],
   "searchString": "99191999191999",
-  "alertOnAnyEvent": false
+  "alertOnAnyEvent": false,
+  "requestTime": 1980
 }
 ```
 
 ### Response JSON parameters
-- ```hasXss (boolean)```: Returns ```true``` if a possible XSS was found
-- ```xssData (Array<EventData>)```: Returns an array for any event that fired. Each ```EventData``` entry consists of a ```eventType (string)``` and the ```eventMsg (string)```
-- ```checkTime (Date)```: Returns the timestamp of when the check was executed
-- ```searchString (string)```: Returns the provided searchfor-string for reference
-- ```checkUrl (string)```: Returns the provided URL for reference
 - ```alertOnAnyEvent (boolean)```: Returns ```true``` when the ```everyevent``` POST parameter was set in the request
+- ```blockedUrls (Array<string>)```: Returns an array of resources that were blocked because the domains are in the blacklist
+- ```checkTime (Date)```: Returns the timestamp of when the check was executed
+- ```checkUrl (string)```: Returns the provided URL for reference
+- ```hasXss (boolean)```: Returns ```true``` if a possible XSS was found
+- ```requestTime (number)```: Returns the time in ms that the request took to complete
+- ```searchString (string)```: Returns the provided searchfor-string for reference
+- ```xssData (Array<EventData>)```: Returns an array for any event that fired. Each ```EventData``` entry consists of a ```eventType (string)``` and the ```eventMsg (string)```
 
 ## CLI Options
 The server provides the following CLI parameters to override defaults

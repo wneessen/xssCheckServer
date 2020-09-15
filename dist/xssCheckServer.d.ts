@@ -4,8 +4,10 @@ interface XssObj {
     hasXss: boolean;
     searchString: string;
     xssData: Array<XssDataObj>;
+    blockedUrls?: Array<string>;
     errorMsg?: string;
     alertOnAnyEvent: boolean;
+    requestTime?: number;
 }
 interface XssDataObj {
     eventType: string;
@@ -28,11 +30,17 @@ declare class HttpResObj {
     write(httpRespone: string): void;
     close(): void;
 }
+declare class PhantomNetworkRequest {
+    abort(): void;
+    changeUrl(newUrl: string): void;
+    setHeader(key: string, value: string): void;
+}
 declare const wpObj: any;
 declare const wsObj: any;
 declare const sysObj: any;
 declare const versionNum: string;
 declare let debugMode: boolean;
+declare const resBlackList: Array<string>;
 declare let listenHost: string;
 declare let listenPort: string;
 declare let cliArgs: any;

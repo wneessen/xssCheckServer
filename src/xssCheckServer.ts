@@ -12,8 +12,10 @@ interface XssObj {
     hasXss: boolean,
     searchString: string,
     xssData: Array<XssDataObj>,
+    blockedUrls?: Array<string>,
     errorMsg?: string,
-    alertOnAnyEvent: boolean
+    alertOnAnyEvent: boolean,
+    requestTime?: number
 }
 
 /**
@@ -61,6 +63,15 @@ declare class HttpResObj {
     close(): void;
 }
 
+/**
+ * phantomJS NetworkRequest Class
+*/
+declare class PhantomNetworkRequest {
+    abort(): void;
+    changeUrl(newUrl: string): void;
+    setHeader(key: string, value: string): void;
+}
+
 /******************************************************************************
 * Actual script
 ******************************************************************************/
@@ -70,7 +81,7 @@ const wsObj = require('webserver').create();
 const sysObj = require("system");
 
 // Global settings
-const versionNum: string = '1.0.5b';
+const versionNum: string = '1.0.6';
 let debugMode: boolean = false;
 
 // Webpage object settings
@@ -81,6 +92,12 @@ wpObj.settings.loadImages = true;
 wpObj.settings.javascriptEnabled = true;
 wpObj.settings.localToRemoteUrlAccessEnabled = true;
 wpObj.settings.resourceTimeout = 5000;
+
+// Resource blacklist
+const resBlackList: Array<string> = [
+    'googletagmanager.com', 'google-analytics.com', 'optimizely.com', '.amazon-adsystem.com',
+    'device-metrics-us.amazon.com', 'crashlytics.com', 'doubleclick.net'
+];
 
 // Web server settings
 let listenHost = '127.0.0.1';
@@ -113,14 +130,17 @@ console.log(`This is xssCheckServer v${versionNum}`);
 console.log(`Starting webserver on http://${listenHost}:${listenPort}`);
 const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqObj, resObj: HttpResObj) => {
     const dateObj = new Date();
+    let benchMark = Date.now();
     let searchMsg = 'XSSed!';
     let xssObj: XssObj = {
         hasXss: false,
         xssData: [],
+        blockedUrls: [],
         checkUrl: '',
         checkTime: dateObj,
         searchString: '',
-        alertOnAnyEvent: false
+        alertOnAnyEvent: false,
+        requestTime: 0
     };
 
     // Process the event data if event triggered
@@ -150,6 +170,21 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
         wpObj.onError = ()                      => { return };
     }
 
+    // Block blacklisted domains
+    wpObj.onResourceRequested = function(requestData: HttpReqObj, networkRequest: PhantomNetworkRequest) {
+        const isBlacklisted = (blackListItem: string) => {
+            let regEx = new RegExp(blackListItem, 'g');
+            return requestData.url.match(regEx);
+        };
+        if(resBlackList.some(isBlacklisted)) {
+            if(debugMode) {
+                console.log(`${requestData.url} is blacklisted. Not loading resource.`);
+            }
+            xssObj.blockedUrls.push(requestData.url);
+            networkRequest.abort();
+        }
+    };
+
     // We received a request
     if(debugMode) {
         console.log('Received new HTTP request');
@@ -175,6 +210,7 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
                 var webUrl = reqObj.post.url;
                 xssObj.checkUrl = webUrl;
                 wpObj.open(webUrl, (statusObj: string) => {
+                    benchMark = Date.now() - benchMark;
                     if(statusObj !== 'success') {
                         console.error(`Unable to download URL: ${webUrl}`);
                     }
@@ -183,6 +219,10 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
                             return;
                         });
                     };
+                    xssObj.requestTime = benchMark;
+                    if(debugMode) {
+                        console.log(`Request completed in ${(benchMark / 1000)} sec`);
+                    }
                     resObj.statusCode = 200;
                     resObj.write(JSON.stringify(xssObj));
                     resObj.close();

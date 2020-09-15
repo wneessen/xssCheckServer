@@ -2,7 +2,7 @@
 var wpObj = require('webpage').create();
 var wsObj = require('webserver').create();
 var sysObj = require("system");
-var versionNum = '1.0.5b';
+var versionNum = '1.0.6';
 var debugMode = false;
 wpObj.settings.userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssCheckServer/" + versionNum;
 wpObj.settings.XSSAuditingEnabled = false;
@@ -11,6 +11,10 @@ wpObj.settings.loadImages = true;
 wpObj.settings.javascriptEnabled = true;
 wpObj.settings.localToRemoteUrlAccessEnabled = true;
 wpObj.settings.resourceTimeout = 5000;
+var resBlackList = [
+    'googletagmanager.com', 'google-analytics.com', 'optimizely.com', '.amazon-adsystem.com',
+    'device-metrics-us.amazon.com', 'crashlytics.com', 'doubleclick.net'
+];
 var listenHost = '127.0.0.1';
 var listenPort = '8099';
 var cliArgs = sysObj.args;
@@ -37,14 +41,17 @@ console.log("This is xssCheckServer v" + versionNum);
 console.log("Starting webserver on http://" + listenHost + ":" + listenPort);
 var webService = wsObj.listen(listenHost + ":" + listenPort, function (reqObj, resObj) {
     var dateObj = new Date();
+    var benchMark = Date.now();
     var searchMsg = 'XSSed!';
     var xssObj = {
         hasXss: false,
         xssData: [],
+        blockedUrls: [],
         checkUrl: '',
         checkTime: dateObj,
         searchString: '',
-        alertOnAnyEvent: false
+        alertOnAnyEvent: false,
+        requestTime: 0
     };
     var eventTriggered = function (eventType, eventMsg) {
         if (debugMode) {
@@ -69,6 +76,19 @@ var webService = wsObj.listen(listenHost + ":" + listenPort, function (reqObj, r
     else {
         wpObj.onError = function () { return; };
     }
+    wpObj.onResourceRequested = function (requestData, networkRequest) {
+        var isBlacklisted = function (blackListItem) {
+            var regEx = new RegExp(blackListItem, 'g');
+            return requestData.url.match(regEx);
+        };
+        if (resBlackList.some(isBlacklisted)) {
+            if (debugMode) {
+                console.log(requestData.url + " is blacklisted. Not loading resource.");
+            }
+            xssObj.blockedUrls.push(requestData.url);
+            networkRequest.abort();
+        }
+    };
     if (debugMode) {
         console.log('Received new HTTP request');
         console.log("Method: " + reqObj.method);
@@ -91,6 +111,7 @@ var webService = wsObj.listen(listenHost + ":" + listenPort, function (reqObj, r
                 var webUrl = reqObj.post.url;
                 xssObj.checkUrl = webUrl;
                 wpObj.open(webUrl, function (statusObj) {
+                    benchMark = Date.now() - benchMark;
                     if (statusObj !== 'success') {
                         console.error("Unable to download URL: " + webUrl);
                     }
@@ -100,6 +121,10 @@ var webService = wsObj.listen(listenHost + ":" + listenPort, function (reqObj, r
                         });
                     }
                     ;
+                    xssObj.requestTime = benchMark;
+                    if (debugMode) {
+                        console.log("Request completed in " + (benchMark / 1000) + " sec");
+                    }
                     resObj.statusCode = 200;
                     resObj.write(JSON.stringify(xssObj));
                     resObj.close();
