@@ -2,7 +2,7 @@
 var wpObj = require('webpage').create();
 var wsObj = require('webserver').create();
 var sysObj = require("system");
-var versionNum = '1.0.5';
+var versionNum = '1.0.5b';
 var debugMode = false;
 wpObj.settings.userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssCheckServer/" + versionNum;
 wpObj.settings.XSSAuditingEnabled = false;
@@ -80,7 +80,6 @@ var webService = wsObj.listen(listenHost + ":" + listenPort, function (reqObj, r
     }
     if (reqObj.url === '/check') {
         if (reqObj.method === 'POST') {
-            console.log(reqObj.post.searchfor);
             if (reqObj.post.searchfor) {
                 searchMsg = reqObj.post.searchfor;
                 xssObj.searchString = searchMsg;

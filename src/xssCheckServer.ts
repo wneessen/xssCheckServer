@@ -70,7 +70,7 @@ const wsObj = require('webserver').create();
 const sysObj = require("system");
 
 // Global settings
-const versionNum: string = '1.0.5';
+const versionNum: string = '1.0.5b';
 let debugMode: boolean = false;
 
 // Webpage object settings
@@ -164,7 +164,6 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
     // We can only process POST requests on /check
     if(reqObj.url === '/check') {
         if(reqObj.method === 'POST') {
-            console.log(reqObj.post.searchfor);
             if(reqObj.post.searchfor) {
                 searchMsg = reqObj.post.searchfor;
                 xssObj.searchString = searchMsg;
