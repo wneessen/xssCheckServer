@@ -38,6 +38,10 @@ if [ "x${LISTENHOST}" != "x" ]; then
     STARTPARMS="${STARTPARMS} -l ${LISTENHOST}"
 fi
 
+if [ "x${BLOCKLISTDOMAINS}" != "x" ]; then
+    STARTPARMS="${STARTPARMS} -b ${BLOCKLISTDOMAINS}"
+fi
+
 case "${1}" in
     start)
         ${PHANTOMJS} ${BASEDIR}/dist/xssCheckServer.min.js ${STARTPARMS}

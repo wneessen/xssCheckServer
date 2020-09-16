@@ -103,7 +103,7 @@ In case the page seems clean, the response can look like this:
 ```
 
 ### Response JSON parameters
-- ```blockedUrls (Array<string>)```: Returns an array of resources that were blocked because the domains are in the blacklist
+- ```blockedUrls (Array<string>)```: Returns an array of resources that were blocked because the domains are in the blocklist
 - ```checkTime (Date)```: Returns the timestamp of when the check was executed
 - ```hasXss (boolean)```: Returns ```true``` if a possible XSS was found
 - ```requestData (RequestData)```: Returns a ```RequestData``` object.
@@ -134,7 +134,7 @@ In case the page seems clean, the response can look like this:
 ## CLI Options
 The server provides the following CLI parameters to override defaults
 
-- ```-b <comma-separated list of domains>```: Add additional blacklist domains
+- ```-b <comma-separated list of domains>```: Add additional blocklist domains
 - ```-l <IP address or hostname>```: The IP/hostname for the server to listen on (Default: 127.0.0.1)
 - ```-p <Port>```: The port for the server to listen on (Default: 8099)
 - ```-d```: Enable DEBUG mode (more logging)

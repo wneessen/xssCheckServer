@@ -67,7 +67,7 @@ declare const sysObj: any;
 declare const versionNum: string;
 declare let debugMode: boolean;
 declare let returnResErrors: boolean;
-declare const resBlackList: Array<string>;
+declare const resBlockList: Array<string>;
 declare const resErrorIgnoreList: Array<number>;
 declare let listenHost: string;
 declare let listenPort: string;

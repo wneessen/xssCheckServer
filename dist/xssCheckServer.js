@@ -2,7 +2,7 @@
 var wpObj = require('webpage').create();
 var wsObj = require('webserver').create();
 var sysObj = require("system");
-var versionNum = '1.1.0';
+var versionNum = '1.1.1';
 var debugMode = false;
 var returnResErrors = false;
 wpObj.settings.userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssCheckServer/" + versionNum;
@@ -12,7 +12,7 @@ wpObj.settings.loadImages = false;
 wpObj.settings.javascriptEnabled = true;
 wpObj.settings.localToRemoteUrlAccessEnabled = true;
 wpObj.settings.resourceTimeout = 3000;
-var resBlackList = [
+var resBlockList = [
     'googletagmanager.com', 'google-analytics.com', 'optimizely.com', '.amazon-adsystem.com',
     'device-metrics-us.amazon.com', 'crashlytics.com', 'doubleclick.net'
 ];
@@ -39,8 +39,8 @@ cliArgs.forEach(function (cliArg, cliIdx) {
         }
         if (curArg === '-b') {
             var domainList = curParam;
-            domainList.split(',').forEach(function (blackListDomain) {
-                resBlackList.push(blackListDomain);
+            domainList.split(',').forEach(function (blockListDomain) {
+                resBlockList.push(blockListDomain);
             });
         }
     }
@@ -95,13 +95,13 @@ var webService = wsObj.listen(listenHost + ":" + listenPort, function (reqObj, r
         wpObj.onError = function () { return; };
     }
     wpObj.onResourceRequested = function (httpRequestData, networkRequest) {
-        var isBlacklisted = function (blackListItem) {
-            var regEx = new RegExp(blackListItem, 'g');
+        var isBlocklisted = function (blockListItem) {
+            var regEx = new RegExp(blockListItem, 'g');
             return httpRequestData.url.match(regEx);
         };
-        if (resBlackList.some(isBlacklisted)) {
+        if (resBlockList.some(isBlocklisted)) {
             if (debugMode) {
-                console.log(httpRequestData.url + " is blacklisted. Not loading resource.");
+                console.log(httpRequestData.url + " is blocklisted. Not loading resource.");
             }
             xssObj.blockedUrls.push(httpRequestData.url);
             networkRequest.abort();

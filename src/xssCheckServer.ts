@@ -124,7 +124,7 @@ const wsObj = require('webserver').create();
 const sysObj = require("system");
 
 // Global settings
-const versionNum: string = '1.1.0';
+const versionNum: string = '1.1.1';
 let debugMode: boolean = false;
 let returnResErrors: boolean = false;
 
@@ -137,8 +137,8 @@ wpObj.settings.javascriptEnabled = true;
 wpObj.settings.localToRemoteUrlAccessEnabled = true;
 wpObj.settings.resourceTimeout = 3000;
 
-// Resource blacklist
-const resBlackList: Array<string> = [
+// Resource blocklist
+const resBlockList: Array<string> = [
     'googletagmanager.com', 'google-analytics.com', 'optimizely.com', '.amazon-adsystem.com',
     'device-metrics-us.amazon.com', 'crashlytics.com', 'doubleclick.net'
 ];
@@ -171,8 +171,8 @@ cliArgs.forEach(function(cliArg: string, cliIdx: string) {
         }
         if(curArg === '-b') {
             let domainList: string = curParam;
-            domainList.split(',').forEach(blackListDomain => {
-                resBlackList.push(blackListDomain)
+            domainList.split(',').forEach(blockListDomain => {
+                resBlockList.push(blockListDomain)
             });
         }
     }
@@ -233,15 +233,15 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
         wpObj.onError = ()                      => { return };
     }
 
-    // Block blacklisted domains
+    // Block blocklisted domains
     wpObj.onResourceRequested = function(httpRequestData: HttpReqObj, networkRequest: PhantomNetworkRequest) {
-        const isBlacklisted = (blackListItem: string) => {
-            let regEx = new RegExp(blackListItem, 'g');
+        const isBlocklisted = (blockListItem: string) => {
+            let regEx = new RegExp(blockListItem, 'g');
             return httpRequestData.url.match(regEx);
         };
-        if(resBlackList.some(isBlacklisted)) {
+        if(resBlockList.some(isBlocklisted)) {
             if(debugMode) {
-                console.log(`${httpRequestData.url} is blacklisted. Not loading resource.`);
+                console.log(`${httpRequestData.url} is blocklisted. Not loading resource.`);
             }
             xssObj.blockedUrls.push(httpRequestData.url);
             networkRequest.abort();
