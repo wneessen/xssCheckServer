@@ -1,24 +1,34 @@
 interface XssObj {
     checkTime: Date;
-    checkUrl: string;
     hasXss: boolean;
-    searchString: string;
-    statusCode: number;
-    statusMsg: string;
+    requestData: XssReqObj;
+    responseData: XssResObj;
     xssData: Array<XssDataObj>;
     resourceErrors?: Array<ReturnResourceError>;
-    alertOnAnyEvent?: boolean;
     blockedUrls?: Array<string>;
-    errorMsg?: string;
-    requestTime?: number;
 }
 interface XssDataObj {
     eventType: string;
     eventMsg: string;
 }
+interface XssReqObj {
+    alertOnAnyEvent?: boolean;
+    checkUrl: string;
+    queryString: string;
+    reqMethod: string;
+    searchString: string;
+}
+interface XssResObj {
+    errorMsg?: string;
+    requestTime?: number;
+    statusCode: number;
+    statusMsg: string;
+}
 interface HttpPostParms {
-    searchfor: string;
     everyevent: string;
+    querystring: string;
+    reqmethod: string;
+    searchfor: string;
     url: string;
 }
 interface HttpReqObj {

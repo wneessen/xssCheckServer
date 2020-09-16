@@ -8,17 +8,12 @@
 */
 interface XssObj {
     checkTime: Date,
-    checkUrl: string,
     hasXss: boolean,
-    searchString: string,
-    statusCode: number,
-    statusMsg: string,
+    requestData: XssReqObj,
+    responseData: XssResObj,
     xssData: Array<XssDataObj>,
     resourceErrors?: Array<ReturnResourceError>,
-    alertOnAnyEvent?: boolean,
     blockedUrls?: Array<string>,
-    errorMsg?: string,
-    requestTime?: number
 }
 
 /**
@@ -32,13 +27,40 @@ interface XssDataObj {
 }
 
 /**
+ * XSS request object
+ *
+ * @interface XssReqObj
+*/
+interface XssReqObj {
+    alertOnAnyEvent?: boolean,
+    checkUrl: string,
+    queryString: string,
+    reqMethod: string,
+    searchString: string,
+}
+
+/**
+ * XSS response object
+ *
+ * @interface XssResObj
+*/
+interface XssResObj {
+    errorMsg?: string,
+    requestTime?: number
+    statusCode: number,
+    statusMsg: string,
+}
+
+/**
  * Post params
  *
  * @interface HttpPostParms
 */
 interface HttpPostParms {
-    searchfor: string,
     everyevent: string,
+    querystring: string,
+    reqmethod: string,
+    searchfor: string,
     url: string
 }
 
@@ -102,9 +124,9 @@ const wsObj = require('webserver').create();
 const sysObj = require("system");
 
 // Global settings
-const versionNum: string = '1.0.10';
+const versionNum: string = '1.1.0';
 let debugMode: boolean = false;
-let returnResErrors: boolean = true;
+let returnResErrors: boolean = false;
 
 // Webpage object settings
 wpObj.settings.userAgent = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssCheckServer/${versionNum}`;
@@ -147,6 +169,12 @@ cliArgs.forEach(function(cliArg: string, cliIdx: string) {
         if(curArg === '-d') {
             debugMode = true;
         }
+        if(curArg === '-b') {
+            let domainList: string = curParam;
+            domainList.split(',').forEach(blackListDomain => {
+                resBlackList.push(blackListDomain)
+            });
+        }
     }
 });
 
@@ -156,30 +184,37 @@ console.log(`Starting webserver on http://${listenHost}:${listenPort}`);
 const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqObj, resObj: HttpResObj) => {
     const dateObj = new Date();
     let benchMark = Date.now();
-    let searchMsg = 'XSSed!';
+    let requestData: XssReqObj = {
+        alertOnAnyEvent: false,
+        checkUrl: null,
+        queryString: null,
+        reqMethod: 'GET',
+        searchString: 'XSSed!',
+    };
+    let responseData: XssResObj = {
+        requestTime: 0,
+        statusMsg: null,
+        statusCode: 0,
+    };
     let xssObj: XssObj = {
         blockedUrls: [],
         checkTime: dateObj,
-        checkUrl: '',
+        responseData: responseData,
+        requestData: requestData,
         hasXss: false,
-        searchString: '',
-        statusCode: 0,
-        statusMsg: '',
         xssData: [],
-        alertOnAnyEvent: false,
-        requestTime: 0,
         resourceErrors: []
     };
 
     // Process the event data if event triggered
     let eventTriggered = (eventType: string, eventMsg: string) => {
         if(debugMode) {
-            console.log(`An event has been executed on ${webUrl}`);
+            console.log(`An event has been executed on ${xssObj.requestData.checkUrl}`);
             console.log(`==> EventType: "${eventType}" // EventData: "${eventMsg}"`);
         }
-        if(eventMsg === searchMsg || xssObj.alertOnAnyEvent === true) {
+        if(eventMsg === xssObj.requestData.searchString || xssObj.requestData.alertOnAnyEvent === true) {
             if(debugMode) {
-                console.log('Possible XSS! The eventMsg matches the search string: "' + searchMsg + '"\n');
+                console.log('Possible XSS! The eventMsg matches the search string: "' + xssObj.requestData.searchString + '"\n');
             }
             xssObj.hasXss = true;
             xssObj.xssData.push({eventType: eventType, eventMsg: eventMsg});
@@ -199,16 +234,16 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
     }
 
     // Block blacklisted domains
-    wpObj.onResourceRequested = function(requestData: HttpReqObj, networkRequest: PhantomNetworkRequest) {
+    wpObj.onResourceRequested = function(httpRequestData: HttpReqObj, networkRequest: PhantomNetworkRequest) {
         const isBlacklisted = (blackListItem: string) => {
             let regEx = new RegExp(blackListItem, 'g');
-            return requestData.url.match(regEx);
+            return httpRequestData.url.match(regEx);
         };
         if(resBlackList.some(isBlacklisted)) {
             if(debugMode) {
-                console.log(`${requestData.url} is blacklisted. Not loading resource.`);
+                console.log(`${httpRequestData.url} is blacklisted. Not loading resource.`);
             }
-            xssObj.blockedUrls.push(requestData.url);
+            xssObj.blockedUrls.push(httpRequestData.url);
             networkRequest.abort();
         }
     };
@@ -243,61 +278,105 @@ const webService = wsObj.listen(`${listenHost}:${listenPort}`, (reqObj: HttpReqO
     if(reqObj.url === '/check') {
         if(reqObj.method === 'POST') {
             if(reqObj.post.searchfor) {
-                searchMsg = reqObj.post.searchfor;
-                xssObj.searchString = searchMsg;
+                xssObj.requestData.searchString = reqObj.post.searchfor;
             }
             if(reqObj.post.everyevent && reqObj.post.everyevent === 'true') {
-                xssObj.alertOnAnyEvent = true;
+                xssObj.requestData.alertOnAnyEvent = true;
+            }
+            if(reqObj.post.reqmethod) {
+                if(reqObj.post.reqmethod.toUpperCase() !== 'POST' && reqObj.post.reqmethod.toUpperCase() !== 'GET') {
+                    xssObj.requestData.reqMethod = `${reqObj.post.reqmethod.toUpperCase()}_NOT_SUPPORTED`;
+                }
+                else {
+                    xssObj.requestData.reqMethod = reqObj.post.reqmethod.toUpperCase();
+                }
             }
             if(reqObj.post.url) {
-                var webUrl = reqObj.post.url;
-                xssObj.checkUrl = webUrl;
-                wpObj.open(webUrl, (statusObj: string) => {
-                    benchMark = Date.now() - benchMark;
-                    if(statusObj !== 'success') {
-                        if(debugMode) {
-                            console.error(`Unable to download URL: ${webUrl}`);
-                        }
-                        xssObj.statusCode = 500;
-                        xssObj.statusMsg = statusObj;
-                        xssObj.errorMsg = 'Unabled to download provided URL';
-                    }
-                    else {
-                        xssObj.statusCode = 200;
-                        xssObj.statusMsg = statusObj;
-                        wpObj.evaluate(() => {
-                            return;
-                        });
-                    };
-                    xssObj.requestTime = benchMark;
-                    if(debugMode) {
-                        console.log(`Request completed in ${(benchMark / 1000)} sec`);
-                    }
-                    resObj.statusCode = 200;
-                    resObj.write(JSON.stringify(xssObj));
-                    resObj.close();
-                });
+                xssObj.requestData.checkUrl = reqObj.post.url;
             }
-            else {
+            if(reqObj.post.querystring) {
+                xssObj.requestData.queryString = reqObj.post.querystring;
+            }
+            if(
+                (!xssObj.requestData.checkUrl || xssObj.requestData.checkUrl === '') ||
+                xssObj.requestData.reqMethod === 'INVALID' ||
+                (xssObj.requestData.queryString === null && xssObj.requestData.alertOnAnyEvent === false)
+            ) {
                 resObj.statusCode = 400;
-                xssObj.statusCode = 400;
-                xssObj.errorMsg = 'Missing data';
+                xssObj.responseData.statusCode = 400;
+                xssObj.responseData.errorMsg = 'Missing request parameters';
                 resObj.write(JSON.stringify(xssObj));
                 resObj.close();
+            }
+            else {
+                if(xssObj.requestData.reqMethod === 'GET') {
+                    wpObj.open(`${xssObj.requestData.checkUrl}?${xssObj.requestData.queryString}`, (statusObj: string) => {
+                        benchMark = Date.now() - benchMark;
+                        if(statusObj !== 'success') {
+                            if(debugMode) {
+                                console.error(`Unable to download URL: ${xssObj.requestData.checkUrl}`);
+                            }
+                            xssObj.responseData.statusCode = 500;
+                            xssObj.responseData.statusMsg = statusObj;
+                            xssObj.responseData.errorMsg = 'Unabled to download provided URL';
+                        }
+                        else {
+                            xssObj.responseData.statusCode = 200;
+                            xssObj.responseData.statusMsg = statusObj;
+                            wpObj.evaluate(() => {
+                                return;
+                            });
+                        };
+                        xssObj.responseData.requestTime = benchMark;
+                        if(debugMode) {
+                            console.log(`Request completed in ${(benchMark / 1000)} sec`);
+                        }
+                        resObj.statusCode = 200;
+                        resObj.write(JSON.stringify(xssObj));
+                        resObj.close();
+                    });
+                }
+                else if(xssObj.requestData.reqMethod === 'POST') {
+                    wpObj.open(xssObj.requestData.checkUrl, 'POST', xssObj.requestData.queryString, (statusObj: string) => {
+                        benchMark = Date.now() - benchMark;
+                        if(statusObj !== 'success') {
+                            if(debugMode) {
+                                console.error(`Unable to download URL: ${xssObj.requestData.checkUrl}`);
+                            }
+                            xssObj.responseData.statusCode = 500;
+                            xssObj.responseData.statusMsg = statusObj;
+                            xssObj.responseData.errorMsg = 'Unabled to download provided URL';
+                        }
+                        else {
+                            xssObj.responseData.statusCode = 200;
+                            xssObj.responseData.statusMsg = statusObj;
+                            wpObj.evaluate(() => {
+                                return;
+                            });
+                        };
+                        xssObj.responseData.requestTime = benchMark;
+                        if(debugMode) {
+                            console.log(`Request completed in ${(benchMark / 1000)} sec`);
+                        }
+                        resObj.statusCode = 200;
+                        resObj.write(JSON.stringify(xssObj));
+                        resObj.close();
+                    });
+                }
             }
         }
         else {
             resObj.statusCode = 404;
-            xssObj.statusCode = 404;
-            xssObj.errorMsg = 'Invalid request method';
+            xssObj.responseData.statusCode = 404;
+            xssObj.responseData.errorMsg = 'Invalid request method';
             resObj.write(JSON.stringify(xssObj));
             resObj.close();
         }
     }
     else {
         resObj.statusCode = 404;
-        xssObj.statusCode = 404;
-        xssObj.errorMsg = 'Route not found';
+        xssObj.responseData.statusCode = 404;
+        xssObj.responseData.errorMsg = 'Route not found';
         resObj.write(JSON.stringify(xssObj));
         resObj.close();
     }
